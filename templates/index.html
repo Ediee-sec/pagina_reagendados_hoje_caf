@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reagendados Hoje - Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1 class="title">
+                    <i class="fas fa-calendar-check"></i>
+                    Reagendados Hoje
+                </h1>
+                <p class="subtitle">Dashboard de acompanhamento de reagendamentos</p>
+            </div>
+        </header>
+
+        <!-- Stats Cards -->
+        <div class="stats-container">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 class="stat-number">{{ total_registros }}</h3>
+                    <p class="stat-label">Total de Registros</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-calendar-day"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 class="stat-number">{{ agendamentos_hoje_count }}</h3>
+                    <p class="stat-label">Agendamentos Hoje</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 class="stat-number">{{ pendencias_count }}</h3>
+                    <p class="stat-label">Pendências</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Controls Panel -->
+        <div class="controls-panel">
+            <!-- Filters and Actions -->
+            <div class="actions-row">
+                <div class="filters-container">
+                    <div class="filter-group">
+                        <select id="filterColumn" class="filter-select">
+                            <option value="">Filtrar por coluna</option>
+                            <option value="nome" {{ 'selected' if filter_column == 'nome' }}>Nome</option>
+                            <option value="curso" {{ 'selected' if filter_column == 'curso' }}>Curso</option>
+                            <option value="fone" {{ 'selected' if filter_column == 'fone' }}>Telefone</option>
+                            <option value="data_agendamento" {{ 'selected' if filter_column == 'data_agendamento' }}>Data</option>
+                            <option value="status_pendencia" {{ 'selected' if filter_column == 'status_pendencia' }}>Status</option>
+                        </select>
+                        <input type="text" id="filterValue" placeholder="Valor do filtro..." value="{{ filter_value or '' }}" class="filter-input">
+                    </div>
+                    
+                    <div class="sort-group">
+                        <select id="sortBy" class="sort-select">
+                            <option value="id" {{ 'selected' if sort_by == 'id' }}>ID</option>
+                            <option value="nome" {{ 'selected' if sort_by == 'nome' }}>Nome</option>
+                            <option value="curso" {{ 'selected' if sort_by == 'curso' }}>Curso</option>
+                            <option value="data_agendamento" {{ 'selected' if sort_by == 'data_agendamento' }}>Data</option>
+                            <option value="total_agendamentos" {{ 'selected' if sort_by == 'total_agendamentos' }}>Total</option>
+                        </select>
+                        <select id="sortOrder" class="sort-select">
+                            <option value="asc" {{ 'selected' if sort_order == 'asc' }}>Crescente</option>
+                            <option value="desc" {{ 'selected' if sort_order == 'desc' }}>Decrescente</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Download Actions -->
+                <div class="download-container">
+                    <div class="dropdown">
+                        <button class="download-btn" id="downloadBtn">
+                            <i class="fas fa-download"></i>
+                            Download
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div class="dropdown-content" id="downloadMenu">
+                            <a href="#" data-format="csv">
+                                <i class="fas fa-file-csv"></i>
+                                CSV
+                            </a>
+                            <a href="#" data-format="xlsx">
+                                <i class="fas fa-file-excel"></i>
+                                Excel (XLSX)
+                            </a>
+                            <a href="#" data-format="json">
+                                <i class="fas fa-file-code"></i>
+                                JSON
+                            </a>
+                            <a href="#" data-format="pdf">
+                                <i class="fas fa-file-pdf"></i>
+                                PDF
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Table -->
+        <div class="table-container">
+            <div class="table-wrapper">
+                <table class="data-table" id="dataTable">
+                    <thead>
+                        <tr>
+                            <th data-sort="id">
+                                ID
+                                <i class="fas fa-sort sort-icon"></i>
+                            </th>
+                            <th data-sort="nome">
+                                Nome
+                                <i class="fas fa-sort sort-icon"></i>
+                            </th>
+                            <th data-sort="curso">
+                                Curso
+                                <i class="fas fa-sort sort-icon"></i>
+                            </th>
+                            <th data-sort="fone">
+                                Telefone
+                                <i class="fas fa-sort sort-icon"></i>
+                            </th>
+                            <th data-sort="data_agendamento">
+                                Data Agendamento
+                                <i class="fas fa-sort sort-icon"></i>
+                            </th>
+                            <th data-sort="total_agendamentos">
+                                Total Agendamentos
+                                <i class="fas fa-sort sort-icon"></i>
+                            </th>
+                            <th data-sort="status_pendencia">
+                                Status Pendência
+                                <i class="fas fa-sort sort-icon"></i>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in data %}
+                        <tr class="table-row">
+                            <td class="cell-id">{{ row.id or '-' }}</td>
+                            <td class="cell-nome">
+                                <div class="user-info">
+                                    <div class="user-avatar">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                    <span>{{ row.nome or '-' }}</span>
+                                </div>
+                            </td>
+                            <td class="cell-curso">
+                                <span class="course-tag">{{ row.curso or '-' }}</span>
+                            </td>
+                            <td class="cell-fone">
+                                <a href="tel:{{ row.fone }}" class="phone-link">
+                                    <i class="fas fa-phone"></i>
+                                    {{ row.fone or '-' }}
+                                </a>
+                            </td>
+                            <td class="cell-data">
+                                <span class="date-badge">{{ row.data_agendamento.strftime('%Y-%m-%d') if row.data_agendamento else '-' }}</span>
+                            </td>
+                            <td class="cell-total">
+                                <span class="count-badge">{{ row.total_agendamentos or '0' }}</span>
+                            </td>
+                            <td class="cell-status">
+                                <span class="status-badge status-{{ 'pending' if 'Pendente' in (row.status_pendencia or '') else 'completed' }}">
+                                    {{ row.status_pendencia or '-' }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Pagination Controls -->
+        <div class="pagination-controls">
+            <a href="{{ url_for('main.index', page=1, filter_column=filter_column, filter_value=filter_value, sort_by=sort_by, sort_order=sort_order) }}" class="pagination-link {{ 'disabled' if page == 1 }}">
+                Primeira
+            </a>
+            <a href="{{ url_for('main.index', page=page - 1, filter_column=filter_column, filter_value=filter_value, sort_by=sort_by, sort_order=sort_order) }}" class="pagination-link {{ 'disabled' if page == 1 }}">
+                Anterior
+            </a>
+            {% for p in range(1, total_pages + 1) %}
+                <a href="{{ url_for('main.index', page=p, filter_column=filter_column, filter_value=filter_value, sort_by=sort_by, sort_order=sort_order) }}" class="pagination-link {{ 'active' if p == page }}">{{ p }}</a>
+            {% endfor %}
+            <a href="{{ url_for('main.index', page=page + 1, filter_column=filter_column, filter_value=filter_value, sort_by=sort_by, sort_order=sort_order) }}" class="pagination-link {{ 'disabled' if page == total_pages }}">
+                Próxima
+            </a>
+            <a href="{{ url_for('main.index', page=total_pages, filter_column=filter_column, filter_value=filter_value, sort_by=sort_by, sort_order=sort_order) }}" class="pagination-link {{ 'disabled' if page == total_pages }}">
+                Última
+            </a>
+        </div>
+
+        <!-- Empty State -->
+        {% if not data %}
+        <div class="empty-state">
+            <div class="empty-icon">
+                <i class="fas fa-search"></i>
+            </div>
+            <h3>Nenhum resultado encontrado</h3>
+            <p>Tente ajustar os filtros</p>
+        </div>
+        {% endif %}
+
+        <!-- Loading Overlay -->
+        <div class="loading-overlay" id="loadingOverlay">
+            <div class="loading-spinner">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Carregando...</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
+
